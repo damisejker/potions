@@ -165,8 +165,10 @@ INSERT INTO recipe_ingredients (recipe_id, ingredient_name, sort_order) VALUES
 ((SELECT id FROM recipes WHERE potion_key = 'potion18'), 'Ingredient 1', 1),
 ((SELECT id FROM recipes WHERE potion_key = 'potion18'), 'Ingredient 2', 2);
 
--- 3. Update dropdown in index.php (only place code needs to change)
+-- 3. That's it! The potion will automatically appear in the dropdown.
 ```
+
+**No code changes needed!** The dropdown list in `index.php` now dynamically loads all active recipes from the database.
 
 ## Rollback Plan
 

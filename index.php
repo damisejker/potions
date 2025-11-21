@@ -360,41 +360,61 @@ if(!isset($_GET['potion'])) {
          
          <select name="potion">
              <option></option>
-             <option value='1'>1. Противоаллергическое зелье</option>
-             <option value='2'>2. Эликсир бодрости</option>
-             <option value='3'>3. Бодряще-лечащая настойка</option>
-             <option value='4'>4. Тонизирующее зелье</option>
-             <option value='5'>5. Зелье саламандры</option>
-             <option value='6'>6. Зелье ночного зрения</option>
-             <option value='7'>7. Зелье "Щит ясного сознания"</option>
-             <option value='8'>8. Зелье "Хранитель от нечисти"</option>
-             <option value='9'>9. Зелье "Увеличитель силы"</option>
-             <option value='10'>10. Зелье "Приток сил"</option>
-             <option value='11'>11. Быстрозаживляющая универсальная мазь</option>
-             <option value='12'>12. Согревающая настойка</option>
-             <option value='13'>13. Охлаждающая паста</option>
-             <option value='14'>14. Противоядие от самых сильных любовных зелий</option>
-             <option value='16'>15. Зелье ментального восстановления</option>
-             
              <?php
-             // проверяем статус тура в админке
-$sqli = "SELECT * FROM `tury` WHERE `tur`='1'"; 
- $resu = mysqli_query($conn, $sqli);
-  $check = mysqli_fetch_array($resu);
-   $stats = $check['status'];
-   // если тур активен, все предметы видны
-    if($stats == 1) {
-             
-             
-             $sql = "SELECT * FROM `contestants` WHERE `name`='$login'"; 
- $res = mysqli_query($conn, $sql);
- 
- // если участник в списках, показываем предмет
-  if(mysqli_num_rows($res)) {
-      ?>
-             <option value='15'>Зелье для первого тура турнира ЧВ</option>
-             <? }
-             }?>
+             // Dynamically load active recipes from database
+             $recipes_query = "SELECT `id`, `potion_number`, `name`, `requires_tournament`
+                              FROM `recipes`
+                              WHERE `is_active` = 1
+                              ORDER BY CAST(`potion_number` AS UNSIGNED), `potion_number`";
+             $recipes_result = mysqli_query($conn, $recipes_query);
+
+             $display_order = 1;
+             while ($recipe_row = mysqli_fetch_assoc($recipes_result)) {
+                 $potion_num = $recipe_row['potion_number'];
+                 $potion_name = $recipe_row['name'];
+                 $requires_tournament = $recipe_row['requires_tournament'];
+
+                 $show_recipe = true;
+
+                 // Check tournament requirements
+                 if ($requires_tournament == 1) {
+                     $show_recipe = false;
+
+                     // Check if tournament is active
+                     $stmt_tour = mysqli_prepare($conn, "SELECT `status` FROM `tury` WHERE `tur` = 1");
+                     mysqli_stmt_execute($stmt_tour);
+                     $tour_result = mysqli_stmt_get_result($stmt_tour);
+                     $tour_data = mysqli_fetch_assoc($tour_result);
+                     mysqli_stmt_close($stmt_tour);
+
+                     if ($tour_data && $tour_data['status'] == 1) {
+                         // Check if user is a contestant
+                         $stmt_contestant = mysqli_prepare($conn, "SELECT * FROM `contestants` WHERE `name` = ?");
+                         mysqli_stmt_bind_param($stmt_contestant, "s", $login);
+                         mysqli_stmt_execute($stmt_contestant);
+                         $contestant_result = mysqli_stmt_get_result($stmt_contestant);
+
+                         if (mysqli_num_rows($contestant_result) > 0) {
+                             $show_recipe = true;
+                         }
+                         mysqli_stmt_close($stmt_contestant);
+                     }
+                 }
+
+                 if ($show_recipe) {
+                     // Display with sequential numbering for non-tournament potions
+                     if (!$requires_tournament) {
+                         echo "<option value='" . htmlspecialchars($potion_num) . "'>" .
+                              $display_order . ". " . htmlspecialchars($potion_name) . "</option>\n";
+                         $display_order++;
+                     } else {
+                         // Tournament potions without numbering
+                         echo "<option value='" . htmlspecialchars($potion_num) . "'>" .
+                              htmlspecialchars($potion_name) . "</option>\n";
+                     }
+                 }
+             }
+             ?>
            </select>
            
          <input type="submit" name="select" value="Выбрать">
