@@ -159,6 +159,7 @@ else {
 <!--[if lt IE 9]><script src="/html5.js"></script><![endif]-->
 <meta name="description" content="Университет магических искусств, основанный в 2011 году" />
 <link rel="stylesheet" href="https://magismo.ru/potions/css/styles.css" media="screen">
+<link rel="stylesheet" href="https://magismo.ru/potions/css/gamification.css" media="screen">
 <link rel="icon" href="https://magismo.ru/favicon.ico" type="image/x-icon" />
 <link href='http://fonts.googleapis.com/css?family=Open+Sans' rel='stylesheet' type='text/css'>
 <link rel="stylesheet" id="dashicons-css" href="../castle_style/dashicons.css" type="text/css" media="all">

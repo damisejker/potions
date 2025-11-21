@@ -60,6 +60,49 @@ if (!$recipe['requires_tournament']) {
 // Recipe title
 echo "<h3>" . htmlspecialchars($recipe['name']) . "</h3>";
 
+// Show progress bar if brewing is in progress
+if ($progress == 1 && $required_count > 0) {
+    $progress_percentage = ($cauldron_count / $required_count) * 100;
+    echo "<div class='brewing-progress'>";
+    echo "<div class='progress-bar' style='width: " . $progress_percentage . "%;'>";
+    echo $cauldron_count . " / " . $required_count . " ингредиентов";
+    echo "</div>";
+    echo "</div>";
+
+    // Show ingredients currently in cauldron
+    if ($cauldron_count > 0) {
+        $stmt_cauldron = mysqli_prepare($conn, "SELECT DISTINCT `ingredient` FROM `potionkotel` WHERE `login` = ? AND `sessionid` = ? ORDER BY `id` ASC");
+        mysqli_stmt_bind_param($stmt_cauldron, "ss", $login, $session_id);
+        mysqli_stmt_execute($stmt_cauldron);
+        $cauldron_ingredients_result = mysqli_stmt_get_result($stmt_cauldron);
+
+        echo "<div class='cauldron-contents'>";
+        echo "<h4>🧪 В котле:</h4>";
+
+        while ($cauldron_item = mysqli_fetch_assoc($cauldron_ingredients_result)) {
+            // Get ingredient image from depositarium
+            $ing_name = $cauldron_item['ingredient'];
+            $stmt_pic = mysqli_prepare($conn, "SELECT `picture` FROM `depositarium` WHERE `goodname` = ? LIMIT 1");
+            mysqli_stmt_bind_param($stmt_pic, "s", $ing_name);
+            mysqli_stmt_execute($stmt_pic);
+            $pic_result = mysqli_stmt_get_result($stmt_pic);
+            $pic_data = mysqli_fetch_assoc($pic_result);
+            $ing_picture = $pic_data['picture'] ?? '';
+            mysqli_stmt_close($stmt_pic);
+
+            echo "<div class='ingredient-item'>";
+            if ($ing_picture) {
+                echo "<img src='" . htmlspecialchars($ing_picture) . "' alt='" . htmlspecialchars($ing_name) . "'>";
+            }
+            echo "<span>" . htmlspecialchars($ing_name) . "</span>";
+            echo "</div>";
+        }
+
+        echo "</div>";
+        mysqli_stmt_close($stmt_cauldron);
+    }
+}
+
 // Recipe details (collapsible)
 echo "<h3>Рецепт <a onclick=expandit('recipe') href='javascript:void(0);' style='text-size:10pt;color:#dbcea4'>[+ Посмотреть]</a></h3>";
 echo "<div id='recipe' style='display: none;'>";
@@ -147,6 +190,28 @@ mysqli_stmt_close($stmt);
 // Check if potion is complete
 if ($required_count > 0 && $cauldron_count == $required_count) {
     $gotovo = 1;
+
+    // Show success message with animation
+    echo "<div class='brew-message success'>✨ Зелье готово! ✨</div>";
+    echo "<script>setTimeout(() => { document.querySelector('.brew-message').remove(); }, 3000);</script>";
+
+    // Trigger celebration confetti
+    echo "<div class='celebration-overlay' id='celebration'></div>";
+    echo "<script>
+        (function() {
+            const overlay = document.getElementById('celebration');
+            for (let i = 0; i < 50; i++) {
+                const confetti = document.createElement('div');
+                confetti.className = 'confetti';
+                confetti.style.left = Math.random() * 100 + '%';
+                confetti.style.top = Math.random() * -20 + '%';
+                confetti.style.background = ['#FFD700', '#FF69B4', '#4CAF50', '#2196F3', '#FF5722'][Math.floor(Math.random() * 5)];
+                confetti.style.animationDelay = Math.random() * 0.5 + 's';
+                overlay.appendChild(confetti);
+            }
+            setTimeout(() => overlay.remove(), 3000);
+        })();
+    </script>";
 
     echo "Получилось! Всё готово.<br>";
     echo "<b>Пожалуйста, заберите зелье, кликнув на него.</b>";
@@ -247,8 +312,8 @@ if ($required_count > 0 && $cauldron_count == $required_count) {
             }
 
             echo "<br><div id='puff'></div>";
-            echo "<a href='?potion=" . urlencode($potion_number) . "&n=" . urlencode($item_name) . "&t=" . $item_id . "&s=" . urlencode($session_id) . "' id='myLink'>";
-            echo "<span style='color:#ffffff'><img src='" . htmlspecialchars($item_picture) . "' height='48'> <b>" . htmlspecialchars($item_name) . "</b></span>";
+            echo "<a href='?potion=" . urlencode($potion_number) . "&n=" . urlencode($item_name) . "&t=" . $item_id . "&s=" . urlencode($session_id) . "' id='myLink' class='ingredient-link' data-ingredient='" . htmlspecialchars($item_name) . "' data-valid='" . ($is_valid ? '1' : '0') . "'>";
+            echo "<span style='color:#ffffff' class='ingredient-clickable'><img src='" . htmlspecialchars($item_picture) . "' height='48'> <b>" . htmlspecialchars($item_name) . "</b></span>";
             echo "</a>";
         }
         mysqli_stmt_close($stmt);
@@ -297,4 +362,85 @@ if (isset($_GET['n']) && isset($_GET['t']) && isset($_GET['s']) && $_GET['potion
     // Redirect back to recipe page
     echo "<script language='javascript' type='text/javascript'>window.onLoad=poscrolim(); function poscrolim() { location.href='https://magismo.ru/potions/index.php?potion=" . urlencode($potion_number) . "'; }</script>";
 }
+
+// Add gamification JavaScript
+echo "<script>
+(function() {
+    // Sparkle effect on ingredient click
+    document.querySelectorAll('.ingredient-link').forEach(link => {
+        link.addEventListener('click', function(e) {
+            const isValid = this.getAttribute('data-valid') === '1';
+            const rect = this.getBoundingClientRect();
+            const x = rect.left + rect.width / 2;
+            const y = rect.top + rect.height / 2;
+
+            if (isValid) {
+                // Create sparkles for valid ingredients
+                for (let i = 0; i < 12; i++) {
+                    const sparkle = document.createElement('div');
+                    sparkle.className = 'sparkle';
+                    sparkle.style.left = x + 'px';
+                    sparkle.style.top = y + 'px';
+                    const angle = (Math.PI * 2 * i) / 12;
+                    const distance = 50 + Math.random() * 30;
+                    sparkle.style.setProperty('--x', (Math.cos(angle) * distance) + 'px');
+                    sparkle.style.setProperty('--y', (Math.sin(angle) * distance) + 'px');
+                    document.body.appendChild(sparkle);
+                    setTimeout(() => sparkle.remove(), 1000);
+                }
+
+                // Create splash effect
+                const splash = document.createElement('div');
+                splash.className = 'ingredient-splash';
+                splash.innerHTML = '<span style=\"font-size: 48px;\">💧</span>';
+                document.body.appendChild(splash);
+                setTimeout(() => splash.remove(), 1000);
+            } else {
+                // Show error message for invalid ingredients
+                const errorMsg = document.createElement('div');
+                errorMsg.className = 'brew-message error';
+                errorMsg.textContent = '❌ Неверный ингредиент!';
+                document.body.appendChild(errorMsg);
+                setTimeout(() => errorMsg.remove(), 2000);
+                e.preventDefault();
+            }
+        });
+    });
+
+    // Animate cauldron liquid color based on progress
+    const progressBar = document.querySelector('.progress-bar');
+    if (progressBar) {
+        const width = parseFloat(progressBar.style.width);
+        let color1, color2;
+
+        if (width < 33) {
+            color1 = '#8B4513'; // Brown
+            color2 = '#654321';
+        } else if (width < 66) {
+            color1 = '#9370DB'; // Purple
+            color2 = '#663399';
+        } else {
+            color1 = '#4CAF50'; // Green
+            color2 = '#8BC34A';
+        }
+
+        progressBar.style.background = 'linear-gradient(90deg, ' + color1 + ', ' + color2 + ')';
+    }
+
+    // Add bubbling animation to cauldron contents
+    const cauldronContents = document.querySelector('.cauldron-contents');
+    if (cauldronContents) {
+        // Create some bubble elements
+        for (let i = 0; i < 5; i++) {
+            const bubble = document.createElement('div');
+            bubble.className = 'liquid-bubble';
+            bubble.style.left = (20 + Math.random() * 60) + '%';
+            bubble.style.width = bubble.style.height = (5 + Math.random() * 10) + 'px';
+            bubble.style.animationDelay = (Math.random() * 2) + 's';
+            bubble.style.animationDuration = (2 + Math.random() * 2) + 's';
+            cauldronContents.appendChild(bubble);
+        }
+    }
+})();
+</script>";
 ?>
