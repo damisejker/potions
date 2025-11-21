@@ -444,17 +444,27 @@ if ($currentLinkId !== null && userHasAccess($conn, $_SESSION['login'], $current
 <br>
 <form method='post' id='recipeForm'>
 
+	<?php
+	// Auto-generate next potion key and number
+	$next_query = "SELECT MAX(CAST(REPLACE(potion_key, 'potion', '') AS UNSIGNED)) as max_num FROM recipes WHERE potion_key LIKE 'potion%'";
+	$next_result = mysqli_query($conn, $next_query);
+	$next_row = mysqli_fetch_assoc($next_result);
+	$next_num = ($next_row['max_num'] ?? 16) + 1;
+	$auto_potion_key = "potion" . $next_num;
+	$auto_potion_number = (string)$next_num;
+	?>
+
 	<div class="row">
 		<div class="col-md-6">
 			<h5>Potion Key <span style="color:red">*</span></h5>
-			<small>Уникальный идентификатор (например: potion18, kmarst4)</small>
-			<input type='text' name='potion_key' class="form-control" required />
+			<small>Автоматически сгенерировано (можно изменить для турнирных)</small>
+			<input type='text' name='potion_key' class="form-control" value="<?php echo htmlspecialchars($auto_potion_key); ?>" required />
 		</div>
 
 		<div class="col-md-6">
 			<h5>Potion Number <span style="color:red">*</span></h5>
-			<small>Номер для GET параметра (например: 18, kmarst4)</small>
-			<input type='text' name='potion_number' class="form-control" required />
+			<small>Автоматически сгенерировано (можно изменить для турнирных)</small>
+			<input type='text' name='potion_number' class="form-control" value="<?php echo htmlspecialchars($auto_potion_number); ?>" required />
 		</div>
 	</div>
 
@@ -466,11 +476,11 @@ if ($currentLinkId !== null && userHasAccess($conn, $_SESSION['login'], $current
 	<input type='text' name='image_url' id='image_url' class="form-control" value="<?php echo htmlspecialchars($upload_full_url); ?>" required />
 
 	<h5>Описание эффектов зелья</h5>
-	<textarea name='description' class="form-control" rows="3"></textarea>
+	<textarea name='description' class="form-control" rows="6"></textarea>
 
 	<h5>Usage Keyword</h5>
 	<small>Текст, который появляется когда игрок использует зелье. Используйте {name} для имени игрока</small>
-	<textarea name='usage_keyword' class="form-control" rows="2"></textarea>
+	<textarea name='usage_keyword' class="form-control" rows="4"></textarea>
 
 	<h5>Redirect URL (необязательно)</h5>
 	<small>Оставьте пустым для стандартного редиректа на /potions/</small>
@@ -487,15 +497,21 @@ if ($currentLinkId !== null && userHasAccess($conn, $_SESSION['login'], $current
 					<option value="">-- Выберите ингредиент --</option>
 					<?php
 					// Load available ingredients from shop_goods
-					$ing_query = "SELECT `goodname`, `picture`, `reformed_price` FROM `shop_goods`
+					$ing_query = "SELECT `name`, `picture`, `reformed_price` FROM `shop_goods`
 								  WHERE `category` IN ('plants', 'fruits', 'liquids', 'animals', 'stones', 'powder')
 								  AND `shop` = 'potions'
-								  ORDER BY `goodname`";
+								  ORDER BY `name`";
 					$ing_result = mysqli_query($conn, $ing_query);
 					while($ing = mysqli_fetch_assoc($ing_result)) {
-						$price = number_format($ing['reformed_price'] / (80 * 12), 2); // Convert to junit
-						echo "<option value='" . htmlspecialchars($ing['goodname']) . "' data-price='" . $ing['reformed_price'] . "' data-image='" . htmlspecialchars($ing['picture']) . "'>";
-						echo htmlspecialchars($ing['goodname']) . " (₽" . $price . ")";
+						// Convert bronze to ⋢gold.silver.bronze format
+						$bronze_total = $ing['reformed_price'];
+						$gold = floor($bronze_total / (80 * 12));
+						$silver = floor(($bronze_total % (80 * 12)) / 12);
+						$bronze = $bronze_total % 12;
+						$price_display = sprintf("⋢%02d.%02d.%02d", $gold, $silver, $bronze);
+
+						echo "<option value='" . htmlspecialchars($ing['name']) . "' data-price='" . $ing['reformed_price'] . "' data-image='" . htmlspecialchars($ing['picture']) . "'>";
+						echo htmlspecialchars($ing['name']) . " (" . $price_display . ")";
 						echo "</option>";
 					}
 					?>
@@ -508,7 +524,7 @@ if ($currentLinkId !== null && userHasAccess($conn, $_SESSION['login'], $current
 	<button type="button" class="btn btn-success" onclick="addIngredient()">+ Добавить ингредиент</button>
 
 	<div class="total-cost-display">
-		Общая стоимость: ₽<span id="total_cost_display">0.00</span>
+		Общая стоимость: <span id="total_cost_display">⋢00.00.00</span>
 		<input type="hidden" name="total_cost" id="total_cost" value="0">
 	</div>
 
@@ -561,17 +577,29 @@ function removeIngredient(btn) {
 }
 
 function updateCost() {
-	let total = 0;
+	let totalBronze = 0;
 	document.querySelectorAll('.ingredient-selector').forEach(select => {
 		const option = select.options[select.selectedIndex];
 		if(option && option.dataset.price) {
-			total += parseFloat(option.dataset.price);
+			totalBronze += parseFloat(option.dataset.price);
 		}
 	});
 
-	// Convert from bronze to junit (1 junit = 80 silver = 960 bronze)
-	const totalJunit = total / (80 * 12);
-	document.getElementById('total_cost_display').textContent = totalJunit.toFixed(2);
+	// Convert bronze to ⋢gold.silver.bronze format
+	// 1 gold = 80 silver, 1 silver = 12 bronze
+	const gold = Math.floor(totalBronze / (80 * 12));
+	const silver = Math.floor((totalBronze % (80 * 12)) / 12);
+	const bronze = totalBronze % 12;
+
+	const priceDisplay = '⋢' +
+		String(gold).padStart(2, '0') + '.' +
+		String(silver).padStart(2, '0') + '.' +
+		String(bronze).padStart(2, '0');
+
+	document.getElementById('total_cost_display').textContent = priceDisplay;
+
+	// Store the cost in junit format (gold.silver) for database
+	const totalJunit = gold + (silver / 80) + (bronze / (80 * 12));
 	document.getElementById('total_cost').value = totalJunit.toFixed(2);
 }
 
@@ -611,12 +639,20 @@ document.addEventListener('DOMContentLoaded', function() {
 		$recipes_result = mysqli_query($conn, $recipes_query);
 
 		while($recipe = mysqli_fetch_assoc($recipes_result)) {
+			// Convert cost from junit to ⋢gold.silver.bronze format
+			$cost_junit = $recipe['cost'];
+			$total_bronze = round($cost_junit * 80 * 12);
+			$gold = floor($total_bronze / (80 * 12));
+			$silver = floor(($total_bronze % (80 * 12)) / 12);
+			$bronze = $total_bronze % 12;
+			$cost_display = sprintf("⋢%02d.%02d.%02d", $gold, $silver, $bronze);
+
 			echo "<tr>";
 			echo "<td>" . $recipe['id'] . "</td>";
 			echo "<td><img src='" . htmlspecialchars($recipe['image_url']) . "' alt='potion' /></td>";
 			echo "<td><b>" . htmlspecialchars($recipe['name']) . "</b></td>";
 			echo "<td>" . htmlspecialchars($recipe['potion_number']) . "</td>";
-			echo "<td>₽" . number_format($recipe['cost'], 2) . "</td>";
+			echo "<td>" . $cost_display . "</td>";
 			echo "<td>" . $recipe['ing_count'] . "</td>";
 			echo "<td>" . ($recipe['is_active'] ? "<span style='color:green'>✓ Активен</span>" : "<span style='color:red'>✗ Скрыт</span>") . "</td>";
 			echo "<td>" . ($recipe['requires_tournament'] ? "<span style='color:orange'>Да</span>" : "Нет") . "</td>";
