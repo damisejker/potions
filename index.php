@@ -336,24 +336,8 @@ if (empty($_SESSION['login'])) {
     
     
 
-// Зелья
-include "recipe/r1.php";
-include "recipe/r2.php";
-include "recipe/r3.php";
-include "recipe/r4.php";
-include "recipe/r5.php";
-include "recipe/r6.php";
-include "recipe/r7.php";
-include "recipe/r8.php";
-include "recipe/r9.php";
-include "recipe/r10.php";
-include "recipe/r11.php";
-include "recipe/r12.php";
-include "recipe/r13.php";
-include "recipe/r14.php";
-include "recipe/r15.php";
-include "recipe/r16.php";
-include "recipe/rkmarst3-3.php";
+// Dynamic recipe handler - replaces all individual recipe files
+include "recipe.php";
 
 if(isset($_POST['select'])) {
   $potion = $_POST['potion'];
