@@ -360,15 +360,17 @@ if ($currentLinkId !== null && userHasAccess($conn, $_SESSION['login'], $current
 		$image_url = mysqli_real_escape_string($conn, $_POST['image_url']);
 		$usage_keyword = mysqli_real_escape_string($conn, $_POST['usage_keyword']);
 		$description = mysqli_real_escape_string($conn, $_POST['description']);
+		$preparation_text = mysqli_real_escape_string($conn, $_POST['preparation_text']);
+		$final_characteristics = mysqli_real_escape_string($conn, $_POST['final_characteristics']);
 		$redirect_url = mysqli_real_escape_string($conn, $_POST['redirect_url']);
 		$is_active = (int)$_POST['is_active'];
 		$requires_tournament = (int)$_POST['requires_tournament'];
 		$total_cost = (int)$_POST['total_cost']; // Now storing bronze directly
 
-		if($name && $potion_key && $potion_number) {
+		if($name && $potion_key && $potion_number && $preparation_text) {
 			// Insert recipe
-			$stmt = mysqli_prepare($conn, "INSERT INTO `recipes` SET `potion_key`=?, `potion_number`=?, `name`=?, `cost`=?, `image_url`=?, `usage_keyword`=?, `description`=?, `redirect_url`=?, `is_active`=?, `requires_tournament`=?");
-			mysqli_stmt_bind_param($stmt, "sssissssii", $potion_key, $potion_number, $name, $total_cost, $image_url, $usage_keyword, $description, $redirect_url, $is_active, $requires_tournament);
+			$stmt = mysqli_prepare($conn, "INSERT INTO `recipes` SET `potion_key`=?, `potion_number`=?, `name`=?, `cost`=?, `image_url`=?, `usage_keyword`=?, `description`=?, `preparation_text`=?, `final_characteristics`=?, `redirect_url`=?, `is_active`=?, `requires_tournament`=?");
+			mysqli_stmt_bind_param($stmt, "sssissssssii", $potion_key, $potion_number, $name, $total_cost, $image_url, $usage_keyword, $description, $preparation_text, $final_characteristics, $redirect_url, $is_active, $requires_tournament);
 
 			if(mysqli_stmt_execute($stmt)) {
 				$recipe_id = mysqli_insert_id($conn);
@@ -477,6 +479,14 @@ if ($currentLinkId !== null && userHasAccess($conn, $_SESSION['login'], $current
 
 	<h5>Описание эффектов зелья</h5>
 	<textarea name='description' class="form-control" rows="6"></textarea>
+
+	<h5>Приготовление (рецепт) <span style="color:red">*</span></h5>
+	<small>Детальные инструкции как варить зелье</small>
+	<textarea name='preparation_text' class="form-control" rows="6" required></textarea>
+
+	<h5>Итоговые характеристики зелья</h5>
+	<small>Цвет, запах, консистенция готового зелья</small>
+	<textarea name='final_characteristics' class="form-control" rows="3"></textarea>
 
 	<h5>Usage Keyword</h5>
 	<small>Текст, который появляется когда игрок использует зелье. Используйте {name} для имени игрока</small>
