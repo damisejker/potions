@@ -63,11 +63,39 @@ echo "<h3>" . htmlspecialchars($recipe['name']) . "</h3>";
 // Recipe details (collapsible)
 echo "<h3>Рецепт <a onclick=expandit('recipe') href='javascript:void(0);' style='text-size:10pt;color:#dbcea4'>[+ Посмотреть]</a></h3>";
 echo "<div id='recipe' style='display: none;'>";
-echo "<b>Стоимость ингредиентов за зелье:</b> &#8930;" . number_format($recipe['cost'], 2) . "<br><br>";
+
+// Convert cost from bronze to ⋢gold.silver.bronze format
+$total_bronze = (int)$recipe['cost'];
+$gold = floor($total_bronze / (80 * 12));
+$silver = floor(($total_bronze % (80 * 12)) / 12);
+$bronze = $total_bronze % 12;
+$cost_display = sprintf("⋢%02d.%02d.%02d", $gold, $silver, $bronze);
+
+echo "<b>Стоимость ингредиентов за зелье:</b> " . $cost_display . "<br><br>";
 echo "<b>Ингредиенты:</b><br>";
 foreach ($ingredients as $ingredient) {
     echo htmlspecialchars($ingredient) . "<br>";
 }
+
+// Show preparation instructions if available
+if (!empty($recipe['preparation_text'])) {
+    echo "<br><b>Приготовление:</b><br>";
+    echo nl2br(htmlspecialchars($recipe['preparation_text'])) . "<br>";
+}
+
+// Show ingredient sequence (order)
+if (count($ingredients) > 0) {
+    echo "<br><b>Последовательность добавления ингредиентов в котел:</b> ";
+    echo implode(" => ", array_map('htmlspecialchars', $ingredients));
+    echo "<br>";
+}
+
+// Show final characteristics if available
+if (!empty($recipe['final_characteristics'])) {
+    echo "<br><b>Итоговые характеристики зелья:</b> ";
+    echo htmlspecialchars($recipe['final_characteristics']);
+}
+
 echo "<hr></div>";
 
 // Handle brewing initiation
