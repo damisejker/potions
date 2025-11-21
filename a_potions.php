@@ -363,12 +363,12 @@ if ($currentLinkId !== null && userHasAccess($conn, $_SESSION['login'], $current
 		$redirect_url = mysqli_real_escape_string($conn, $_POST['redirect_url']);
 		$is_active = (int)$_POST['is_active'];
 		$requires_tournament = (int)$_POST['requires_tournament'];
-		$total_cost = (float)$_POST['total_cost'];
+		$total_cost = (int)$_POST['total_cost']; // Now storing bronze directly
 
 		if($name && $potion_key && $potion_number) {
 			// Insert recipe
 			$stmt = mysqli_prepare($conn, "INSERT INTO `recipes` SET `potion_key`=?, `potion_number`=?, `name`=?, `cost`=?, `image_url`=?, `usage_keyword`=?, `description`=?, `redirect_url`=?, `is_active`=?, `requires_tournament`=?");
-			mysqli_stmt_bind_param($stmt, "sssdssssii", $potion_key, $potion_number, $name, $total_cost, $image_url, $usage_keyword, $description, $redirect_url, $is_active, $requires_tournament);
+			mysqli_stmt_bind_param($stmt, "sssissssii", $potion_key, $potion_number, $name, $total_cost, $image_url, $usage_keyword, $description, $redirect_url, $is_active, $requires_tournament);
 
 			if(mysqli_stmt_execute($stmt)) {
 				$recipe_id = mysqli_insert_id($conn);
@@ -598,9 +598,8 @@ function updateCost() {
 
 	document.getElementById('total_cost_display').textContent = priceDisplay;
 
-	// Store the cost in junit format (gold.silver) for database
-	const totalJunit = gold + (silver / 80) + (bronze / (80 * 12));
-	document.getElementById('total_cost').value = totalJunit.toFixed(2);
+	// Store the total bronze directly (cost column now stores bronze as INT)
+	document.getElementById('total_cost').value = totalBronze;
 }
 
 // Initialize cost calculation
@@ -639,9 +638,8 @@ document.addEventListener('DOMContentLoaded', function() {
 		$recipes_result = mysqli_query($conn, $recipes_query);
 
 		while($recipe = mysqli_fetch_assoc($recipes_result)) {
-			// Convert cost from junit to ⋢gold.silver.bronze format
-			$cost_junit = $recipe['cost'];
-			$total_bronze = round($cost_junit * 80 * 12);
+			// Convert cost from bronze (INT) to ⋢gold.silver.bronze format
+			$total_bronze = (int)$recipe['cost']; // Cost now stored as bronze directly
 			$gold = floor($total_bronze / (80 * 12));
 			$silver = floor(($total_bronze % (80 * 12)) / 12);
 			$bronze = $total_bronze % 12;
