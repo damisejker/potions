@@ -237,7 +237,7 @@ if ($currentLinkId !== null && userHasAccess($conn, $_SESSION['login'], $current
                         <div class="nest" id="Blank_PageClose">
                             <div class="title-alt">
                                 <h6>
-                               Товары в чате - добавление</h6>
+                               Управление рецептами зелий</h6>
                                 <div class="titleClose">
                                     <a class="gone" href="#Blank_PageClose">
                                         <span class="entypo-cancel"></span>
@@ -252,260 +252,392 @@ if ($currentLinkId !== null && userHasAccess($conn, $_SESSION['login'], $current
                             </div>
 
                             <div class="body-nest" id="Blank_Page_Content">
-                                
-    <h5>Размер изображений не должен превышать 15 МБ</h5>                            
+
+    <h5>Размер изображений не должен превышать 15 МБ</h5>
+
+    <style>
+    .ingredient-row {
+        padding: 10px;
+        margin: 5px 0;
+        background: #f5f5f5;
+        border-radius: 4px;
+    }
+    .ingredient-select {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 5px;
+    }
+    .ingredient-image {
+        width: 32px;
+        height: 32px;
+        object-fit: contain;
+    }
+    .btn-remove-ingredient {
+        background: #d9534f;
+        color: white;
+        border: none;
+        padding: 5px 10px;
+        cursor: pointer;
+        border-radius: 3px;
+    }
+    .total-cost-display {
+        font-size: 18px;
+        font-weight: bold;
+        color: #5cb85c;
+        padding: 10px;
+        background: #f0f9f0;
+        border-radius: 4px;
+        margin: 10px 0;
+    }
+    .recipe-table {
+        width: 100%;
+        margin-top: 20px;
+    }
+    .recipe-table th {
+        background: #337ab7;
+        color: white;
+        padding: 10px;
+    }
+    .recipe-table td {
+        padding: 8px;
+        border-bottom: 1px solid #ddd;
+    }
+    .recipe-table img {
+        max-height: 50px;
+    }
+    .action-btn {
+        margin: 2px;
+        padding: 5px 10px;
+        font-size: 12px;
+    }
+    </style>                            
 	<?php
-	
-	// ЗАКУСКИ //
-$uploaddir = '../hall/imgs/zakuski/';
-// это папка, в которую будет загружаться картинка
-$apend=date('mdHis').rand(1,100).'.png'; 
-// это имя, которое будет присвоенно изображению 
-$uploadfile = "$uploaddir$apend"; 
-//в переменную $uploadfile будет входить папка и имя изображения
 
-// В данной строке самое важное - проверяем загружается ли изображение (а может вредоносный код?)
-// И проходит ли изображение по весу. В нашем случае до 9 МБ
-if(($_FILES['userfile']['type'] == 'image/gif' || $_FILES['userfile']['type'] == 'image/jpeg' || $_FILES['userfile']['type'] == 'image/png') && ($_FILES['userfile']['size'] != 0 and $_FILES['userfile']['size']<=15000000)) 
-{ 
-// Указываем максимальный вес загружаемого файла. Сейчас до 512 Кб 
-  if (move_uploaded_file($_FILES['userfile']['tmp_name'], $uploadfile)) 
-   { 
-   //Здесь идет процесс загрузки изображения 
-   $size = getimagesize($uploadfile); 
-   // с помощью этой функции мы можем получить размер пикселей изображения 
-     if ($size[0] < 2000 && $size[1]<2000) 
-     { 
-     // если размер изображения не более 500 пикселей по ширине и не более 1500 по  высоте 
-     echo "<h3>Картинка загружена!</h3> ССЫЛКА: <a href='https://magismo.ru/hall/imgs/zakuski/".$apend."' target='_blank'><b>".$apend."</a></b>
-     <br>В поле ниже не копируйте полную ссылку, а только название файла \"12345.png\".<br>
-     "; 
-     } else {
-     echo "Загружаемое изображение превышает допустимые нормы (ширина не более - 2000; высота не более 2000)<br>"; 
-     unlink($uploadfile); 
-     // удаление файла 
-     } 
-   } else {
-   echo "Файл не загружен, вернитеcь и попробуйте еще раз<br>";
-   } 
-} else { 
-echo "";
-} 
+	// ========== IMAGE UPLOAD FOR POTIONS ==========
+	$uploaddir = 'images/';
+	$uploaded_image_name = '';
+	$upload_full_url = '';
 
-// НАПИТКИ // 
+	// Check if directory exists, create if not
+	if (!file_exists($uploaddir)) {
+		mkdir($uploaddir, 0755, true);
+	}
 
-$uploaddir = '../hall/imgs/napitki/';
-// это папка, в которую будет загружаться картинка
-$apend=date('mdHis').rand(1,100).'.png'; 
-// это имя, которое будет присвоенно изображению 
-$uploadfile = "$uploaddir$apend"; 
-//в переменную $uploadfile будет входить папка и имя изображения
+	// Handle image upload
+	if(isset($_FILES['potion_image']) && ($_FILES['potion_image']['type'] == 'image/gif' ||
+	   $_FILES['potion_image']['type'] == 'image/jpeg' ||
+	   $_FILES['potion_image']['type'] == 'image/png') &&
+	   ($_FILES['potion_image']['size'] != 0 && $_FILES['potion_image']['size'] <= 15000000))
+	{
+		$apend = date('mdHis').rand(1,100).'.png';
+		$uploadfile = $uploaddir . $apend;
 
-// В данной строке самое важное - проверяем загружается ли изображение (а может вредоносный код?)
-// И проходит ли изображение по весу. В нашем случае до 9 МБ
-if(($_FILES['napitki']['type'] == 'image/gif' || $_FILES['napitki']['type'] == 'image/jpeg' || $_FILES['napitki']['type'] == 'image/png') && ($_FILES['napitki']['size'] != 0 and $_FILES['napitki']['size']<=15000000)) 
-{ 
-// Указываем максимальный вес загружаемого файла. Сейчас до 512 Кб 
-  if (move_uploaded_file($_FILES['napitki']['tmp_name'], $uploadfile)) 
-   { 
-   //Здесь идет процесс загрузки изображения 
-   $size = getimagesize($uploadfile); 
-   // с помощью этой функции мы можем получить размер пикселей изображения 
-     if ($size[0] < 10000 && $size[1]<10000) 
-     { 
-     // если размер изображения не более 500 пикселей по ширине и не более 1500 по  высоте 
-     echo "<h3>Картинка загружена!</h3> ССЫЛКА: <a href='https://magismo.ru/hall/imgs/napitki/".$apend."' target='_blank'><b>".$apend."</a></b>
-     <br>В поле ниже не копируйте полную ссылку, а только название файла \"12345.png\".<br>
-     "; 
-     } else {
-     echo "Загружаемое изображение превышает допустимые нормы (ширина не более - 2000; высота не более 2000)<br>"; 
-     unlink($uploadfile); 
-     // удаление файла 
-     } 
-   } else {
-   echo "Файл не загружен, вернитеcь и попробуйте еще раз<br>";
-   } 
-} else { 
-echo "";
-} 
+		if (move_uploaded_file($_FILES['potion_image']['tmp_name'], $uploadfile)) {
+			$size = getimagesize($uploadfile);
+			if ($size[0] < 2000 && $size[1] < 2000) {
+				$uploaded_image_name = $apend;
+				$upload_full_url = "https://magismo.ru/potions/images/" . $apend;
+				echo "<div class='alert alert-success'><h4>✓ Изображение загружено успешно!</h4>";
+				echo "<p><b>Ссылка:</b> <a href='" . htmlspecialchars($upload_full_url) . "' target='_blank'>" . htmlspecialchars($upload_full_url) . "</a></p>";
+				echo "<p><small>Ссылка автоматически вставлена в форму ниже</small></p></div>";
+			} else {
+				echo "<div class='alert alert-danger'>Изображение превышает допустимые размеры (макс. 2000x2000px)</div>";
+				unlink($uploadfile);
+			}
+		} else {
+			echo "<div class='alert alert-danger'>Ошибка загрузки файла</div>";
+		}
+	}
 
-// EDA // 
+	// ========== HANDLE RECIPE ACTIONS ==========
 
-$uploaddir = '../hall/imgs/eda/';
-// это папка, в которую будет загружаться картинка
-$apend=date('mdHis').rand(1,100).'.png'; 
-// это имя, которое будет присвоенно изображению 
-$uploadfile = "$uploaddir$apend"; 
-//в переменную $uploadfile будет входить папка и имя изображения
+	// Add new recipe
+	if(isset($_POST['add_recipe'])) {
+		$potion_key = mysqli_real_escape_string($conn, $_POST['potion_key']);
+		$potion_number = mysqli_real_escape_string($conn, $_POST['potion_number']);
+		$name = mysqli_real_escape_string($conn, $_POST['recipe_name']);
+		$image_url = mysqli_real_escape_string($conn, $_POST['image_url']);
+		$usage_keyword = mysqli_real_escape_string($conn, $_POST['usage_keyword']);
+		$description = mysqli_real_escape_string($conn, $_POST['description']);
+		$redirect_url = mysqli_real_escape_string($conn, $_POST['redirect_url']);
+		$is_active = (int)$_POST['is_active'];
+		$requires_tournament = (int)$_POST['requires_tournament'];
+		$total_cost = (float)$_POST['total_cost'];
 
-// В данной строке самое важное - проверяем загружается ли изображение (а может вредоносный код?)
-// И проходит ли изображение по весу. В нашем случае до 9 МБ
-if(($_FILES['eda']['type'] == 'image/gif' || $_FILES['eda']['type'] == 'image/jpeg' || $_FILES['eda']['type'] == 'image/png') && ($_FILES['eda']['size'] != 0 and $_FILES['eda']['size']<=15000000)) 
-{ 
-// Указываем максимальный вес загружаемого файла. Сейчас до 512 Кб 
-  if (move_uploaded_file($_FILES['eda']['tmp_name'], $uploadfile)) 
-   { 
-   //Здесь идет процесс загрузки изображения 
-   $size = getimagesize($uploadfile); 
-   // с помощью этой функции мы можем получить размер пикселей изображения 
-     if ($size[0] < 2000 && $size[1]<2000) 
-     { 
-     // если размер изображения не более 500 пикселей по ширине и не более 1500 по  высоте 
-     echo "<h3>Картинка загружена!</h3> ССЫЛКА: <a href='https://magismo.ru/hall/imgs/eda/".$apend."' target='_blank'><b>".$apend."</a></b>
-     <br>В поле ниже не копируйте полную ссылку, а только название файла \"12345.png\".<br>
-     "; 
-     } else {
-     echo "Загружаемое изображение превышает допустимые нормы (ширина не более - 2000; высота не более 2000)<br>"; 
-     unlink($uploadfile); 
-     // удаление файла 
-     } 
-   } else {
-   echo "Файл не загружен, вернитеcь и попробуйте еще раз<br>";
-   } 
-} else { 
-echo "";
-} 
+		if($name && $potion_key && $potion_number) {
+			// Insert recipe
+			$stmt = mysqli_prepare($conn, "INSERT INTO `recipes` SET `potion_key`=?, `potion_number`=?, `name`=?, `cost`=?, `image_url`=?, `usage_keyword`=?, `description`=?, `redirect_url`=?, `is_active`=?, `requires_tournament`=?");
+			mysqli_stmt_bind_param($stmt, "sssdssssii", $potion_key, $potion_number, $name, $total_cost, $image_url, $usage_keyword, $description, $redirect_url, $is_active, $requires_tournament);
+
+			if(mysqli_stmt_execute($stmt)) {
+				$recipe_id = mysqli_insert_id($conn);
+
+				// Insert ingredients
+				if(isset($_POST['ingredients']) && is_array($_POST['ingredients'])) {
+					$order = 1;
+					foreach($_POST['ingredients'] as $ingredient_name) {
+						if(!empty($ingredient_name)) {
+							$stmt_ing = mysqli_prepare($conn, "INSERT INTO `recipe_ingredients` SET `recipe_id`=?, `ingredient_name`=?, `sort_order`=?");
+							mysqli_stmt_bind_param($stmt_ing, "isi", $recipe_id, $ingredient_name, $order);
+							mysqli_stmt_execute($stmt_ing);
+							mysqli_stmt_close($stmt_ing);
+							$order++;
+						}
+					}
+				}
+
+				echo "<div class='alert alert-success'><h4>✓ Рецепт успешно добавлен!</h4></div>";
+				echo "<script>setTimeout(function(){ location.href='a_potions.php'; }, 2000);</script>";
+			} else {
+				echo "<div class='alert alert-danger'>Ошибка при добавлении рецепта</div>";
+			}
+			mysqli_stmt_close($stmt);
+		} else {
+			echo "<div class='alert alert-danger'>Заполните все обязательные поля</div>";
+		}
+	}
+
+	// Toggle recipe visibility
+	if(isset($_GET['toggle_active'])) {
+		$recipe_id = (int)$_GET['toggle_active'];
+		$stmt = mysqli_prepare($conn, "UPDATE `recipes` SET `is_active` = NOT `is_active` WHERE `id` = ?");
+		mysqli_stmt_bind_param($stmt, "i", $recipe_id);
+		mysqli_stmt_execute($stmt);
+		mysqli_stmt_close($stmt);
+		echo "<script>location.href='a_potions.php';</script>";
+	}
+
+	// Delete recipe
+	if(isset($_GET['delete_recipe'])) {
+		$recipe_id = (int)$_GET['delete_recipe'];
+		// Ingredients will be deleted automatically due to CASCADE
+		$stmt = mysqli_prepare($conn, "DELETE FROM `recipes` WHERE `id` = ?");
+		mysqli_stmt_bind_param($stmt, "i", $recipe_id);
+		mysqli_stmt_execute($stmt);
+		mysqli_stmt_close($stmt);
+		echo "<script>location.href='a_potions.php';</script>";
+	}
 
 ?>
 
-<a onclick=expandit('create') href='javascript:void(0);' style='border-bottom: 1px dotted darkblue; color:darkblue; text-shadow: 2px white'>Добавить изображение для категории ЗАКУСКИ</a>
-		<div id='create' style='display: none;'>
-			<br>	<form name="upload" method="POST" ENCTYPE="multipart/form-data"> 
-Выберите файл для загрузки: 
-<input type="file" name="userfile"><br>
-<button type="submit" name="upload" value="Загрузить" class="btn btn-primary">Загрузить</button>
-</form>
+<!-- IMAGE UPLOAD SECTION -->
+<a onclick="expandit('upload_section')" href="javascript:void(0);" style="border-bottom: 1px dotted #5bc0de; color:#5bc0de; font-weight:bold">
+	📤 Загрузить изображение готового зелья
+</a>
+<div id='upload_section' style='display: none; margin: 15px 0; padding: 15px; background: #f9f9f9; border-radius: 4px;'>
+	<form method="POST" enctype="multipart/form-data">
+		<label><b>Выберите изображение:</b></label>
+		<input type="file" name="potion_image" accept="image/png,image/jpeg,image/gif" class="form-control" style="margin: 10px 0;">
+		<button type="submit" class="btn btn-info">Загрузить изображение</button>
+		<p><small>Изображение будет загружено в папку <code>/potions/images/</code> и ссылка автоматически вставится в форму</small></p>
+	</form>
 </div>
-<br /> 
-<a onclick=expandit('create2') href='javascript:void(0);' style='border-bottom: 1px dotted darkgreen; color:darkgreen; text-shadow: 2px white'>Добавить изображение для категории НАПИТКИ</a>
-		<div id='create2' style='display: none;'>
-			<br>	<form name="upload" method="POST" ENCTYPE="multipart/form-data"> 
-Выберите файл для загрузки: 
-<input type="file" name="napitki"><br>
-<button type="submit" name="upload" value="Загрузить" class="btn btn-primary">Загрузить</button>
-</form>
-</div>
-<br /> 
-<a onclick=expandit('create3') href='javascript:void(0);' style='border-bottom: 1px dotted darkviolet; color:darkviolet; text-shadow: 2px white'>Добавить изображение для категории БЛЮДА</a>
-		<div id='create3' style='display: none;'>
-			<br>	<form name="upload" method="POST" ENCTYPE="multipart/form-data"> 
-Выберите файл для загрузки: 
-<input type="file" name="eda"><br>
-<button type="submit" name="upload" value="Загрузить" class="btn btn-primary">Загрузить</button>
+
+<hr style="margin: 20px 0;">
+
+<!-- RECIPE CREATION FORM -->
+<a onclick="expandit('recipe_form')" href="javascript:void(0);" style="border-bottom: 1px dotted #5cb85c; color:#5cb85c; font-weight:bold">
+	➕ Добавить новый рецепт зелья
+</a>
+<div id='recipe_form' style='display: none;'>
+<br>
+<form method='post' id='recipeForm'>
+
+	<div class="row">
+		<div class="col-md-6">
+			<h5>Potion Key <span style="color:red">*</span></h5>
+			<small>Уникальный идентификатор (например: potion18, kmarst4)</small>
+			<input type='text' name='potion_key' class="form-control" required />
+		</div>
+
+		<div class="col-md-6">
+			<h5>Potion Number <span style="color:red">*</span></h5>
+			<small>Номер для GET параметра (например: 18, kmarst4)</small>
+			<input type='text' name='potion_number' class="form-control" required />
+		</div>
+	</div>
+
+	<h5>Название зелья <span style="color:red">*</span></h5>
+	<input type='text' name='recipe_name' class="form-control" required />
+
+	<h5>Ссылка на изображение готового зелья <span style="color:red">*</span></h5>
+	<small>Полная ссылка или загрузите изображение выше</small>
+	<input type='text' name='image_url' id='image_url' class="form-control" value="<?php echo htmlspecialchars($upload_full_url); ?>" required />
+
+	<h5>Описание эффектов зелья</h5>
+	<textarea name='description' class="form-control" rows="3"></textarea>
+
+	<h5>Usage Keyword</h5>
+	<small>Текст, который появляется когда игрок использует зелье. Используйте {name} для имени игрока</small>
+	<textarea name='usage_keyword' class="form-control" rows="2"></textarea>
+
+	<h5>Redirect URL (необязательно)</h5>
+	<small>Оставьте пустым для стандартного редиректа на /potions/</small>
+	<input type='text' name='redirect_url' class="form-control" placeholder="https://magismo.ru/myroom/kmarst.php" />
+
+	<br>
+	<h5>Ингредиенты <span style="color:red">*</span></h5>
+	<small>Выберите ингредиенты из магазина зелий</small>
+
+	<div id="ingredients_container">
+		<div class="ingredient-row">
+			<div class="ingredient-select">
+				<select name="ingredients[]" class="form-control ingredient-selector" style="flex: 1;" onchange="updateCost()">
+					<option value="">-- Выберите ингредиент --</option>
+					<?php
+					// Load available ingredients from shop_goods
+					$ing_query = "SELECT `goodname`, `picture`, `reformed_price` FROM `shop_goods`
+								  WHERE `category` IN ('plants', 'fruits', 'liquids', 'animals', 'stones', 'powder')
+								  AND `shop` = 'potions'
+								  ORDER BY `goodname`";
+					$ing_result = mysqli_query($conn, $ing_query);
+					while($ing = mysqli_fetch_assoc($ing_result)) {
+						$price = number_format($ing['reformed_price'] / (80 * 12), 2); // Convert to junit
+						echo "<option value='" . htmlspecialchars($ing['goodname']) . "' data-price='" . $ing['reformed_price'] . "' data-image='" . htmlspecialchars($ing['picture']) . "'>";
+						echo htmlspecialchars($ing['goodname']) . " (₽" . $price . ")";
+						echo "</option>";
+					}
+					?>
+				</select>
+				<button type="button" class="btn-remove-ingredient" onclick="removeIngredient(this)" style="display:none;">Удалить</button>
+			</div>
+		</div>
+	</div>
+
+	<button type="button" class="btn btn-success" onclick="addIngredient()">+ Добавить ингредиент</button>
+
+	<div class="total-cost-display">
+		Общая стоимость: ₽<span id="total_cost_display">0.00</span>
+		<input type="hidden" name="total_cost" id="total_cost" value="0">
+	</div>
+
+	<div class="row">
+		<div class="col-md-6">
+			<h5>Статус</h5>
+			<select name='is_active' class="form-control">
+				<option value='1'>Активен (виден игрокам)</option>
+				<option value='0'>Скрыт</option>
+			</select>
+		</div>
+
+		<div class="col-md-6">
+			<h5>Требует турнир?</h5>
+			<select name='requires_tournament' class="form-control">
+				<option value='0'>Нет</option>
+				<option value='1'>Да (только участникам)</option>
+			</select>
+		</div>
+	</div>
+
+	<br>
+	<button type='submit' name='add_recipe' class="btn btn-primary btn-lg">Сохранить рецепт</button>
+
 </form>
 </div>
 
-			
-<br /> <br />
+<script>
+function addIngredient() {
+	const container = document.getElementById('ingredients_container');
+	const newRow = document.createElement('div');
+	newRow.className = 'ingredient-row';
+	newRow.innerHTML = container.querySelector('.ingredient-row').innerHTML;
+	container.appendChild(newRow);
 
-                           <?php
-	//добавляем товары 
-if(@$_POST['cat']) {
-    $nazwa = $_POST['name'];
-    $url = $_POST['link'];
-    $junit = $_POST['junit'];
-    $drobna = $_POST['drobna'];
-    $cat = strip_tags($_POST['type']);
-    $status = (int)$_POST['status'];
-    
-    $gold = $_POST['gold'] ?? 0;
-    $silver = $_POST['silver'] ?? 0;
-    $bronze = $_POST['bronze'] ?? 0;
-    
-    // Convert the entered amount to bronze
-    $naz_in_bronze = ($gold * 80 * 12) + ($silver * 12) + $bronze;
-     
-     	if($nazwa) {
-			// И добавляем в базу
-			$sql = "INSERT INTO `sell_chat` SET `title` = '$nazwa',  `url` = '$url', `reformed_price` = '$naz_in_bronze', `cat`='$cat', `status`='$status'";
-			$res = mysqli_query($conn, $sql);
-			echo "<br><br><font color='00FF33' size='4'>ГОТОВО!
-			<br>Обновление данных...</font>
-				<script language='javascript' type='text/javascript'>
-    window.onLoad=poscrolim();
-    
-    function poscrolim(){
-        location.href='a_chatmenu.php';
-    }
-</script>";	
-} else  echo "<b><font color='#33FFCC' size='4'>Вы забыли указать название товара в форме!</font></b><br>";
+	// Show remove button on all rows except first
+	document.querySelectorAll('.btn-remove-ingredient').forEach(btn => btn.style.display = 'inline-block');
+	updateCost();
 }
 
-// если нажато Скрыть
-		if(@$_GET['hide']) {
-		    $idsubj = (int)$_GET['hide'];
-			$sql = "UPDATE `menu_header` SET `status`='0' WHERE id='$idsubj'";
-			mysqli_query($conn, $sql);
-			
+function removeIngredient(btn) {
+	const rows = document.querySelectorAll('.ingredient-row');
+	if(rows.length > 1) {
+		btn.closest('.ingredient-row').remove();
+		if(document.querySelectorAll('.ingredient-row').length === 1) {
+			document.querySelector('.btn-remove-ingredient').style.display = 'none';
 		}
-// если нажато Открыть
-		if(@$_GET['view']) {
-		    $idsubj = (int)$_GET['view'];
-			$sql = "UPDATE `menu_header` SET `status`='1' WHERE id='$idsubj'";
-			mysqli_query($conn, $sql);
-			
-		}
-		
-		// если нажато Удалить
-		if(@$_GET['remove']) {
-		    $idsubj = (int)$_GET['remove'];
-			$sql = "DELETE FROM `menu_header` WHERE id='$idsubj'";
-			mysqli_query($conn, $sql);
-			
-		}
-		
-?>
-     
-<form method='post' name='cat'>
-    <h5>Название товара</h5>
-	<input type='text' name='name' class="form-control" />
-	
-	<h5>Ссылка на изображение в PNG формате</h5>
-	<small>Не должно быть белого фона сзади</small>
-	<input type='text' name='link' class="form-control" />
-	
-	<h5>Цена</h5>
-	<table style="width:40%;">
-	    <tr>
-	       	<div class="form-group">
-        <label for="gold"><img src='https://magismo.ru/images/junit_new.png' height='20' title='Юнийт' style='vertical-align: middle'> Золотые:</label>
-        <input name='gold' type="number" min="0" class="form-control" id="gold" style='width:15%' value="0">
-    </div>
-    <div class="form-group">
-        <label for="silver"><img src='https://magismo.ru/images/drobna_new.png' height='18' title='Дробна' class='another' style='vertical-align: middle'> Серебряные:</label>
-        <input name='silver' type="number" min="0" max="80" class="form-control" id="silver" style='width:15%' value="0">
-    </div>
-    <div class="form-group">
-        <label for="bronze"><img src='https://magismo.ru/images/medolva2.png' height='15' title='Медолва' style='vertical-align: middle'> Бронзовые:</label>
-        <input name='bronze' type="number" min="0" max="12" class="form-control" id="bronze" style='width:15%' value="0">
-    </div>
-	   
-	    </tr>
-	    <small>Обязательно сопровождать дробные с нулём. Если, стоимость 5 серебрянных, то вписываем 05. К юнитам не нужно добавлять 0. Если стоимость товара только в серебрянных, в юнийтах вписать 0.</small>
-	    
-	</table>
-	
-	  <br>
-	
-	<h5>Категория</h5>
-    <select name='type' class="form-control">
-	<option value=''></option>
-	<option value='Закуски'> Закуски</option>
-	<option value='Блюда'> Блюда</option>
-	<option value='Напитки'> Напитки</option>
-	</select>
-	
-	<h5>Статус</h5>
-	<small>Да - Товар будет виден сразу в меню, Нет - Товар будет скрыт.</small>
-    <select name='status' class="form-control">
-	<option value=''></option>
-	<option value='1'> Да</option>
-	<option value='0'> Нет</option>
-	</select><br><br>
+		updateCost();
+	}
+}
 
-	<input type='submit' name='cat' value='Добавить' class="btn btn-primary" />
-	
-</form>     
+function updateCost() {
+	let total = 0;
+	document.querySelectorAll('.ingredient-selector').forEach(select => {
+		const option = select.options[select.selectedIndex];
+		if(option && option.dataset.price) {
+			total += parseFloat(option.dataset.price);
+		}
+	});
+
+	// Convert from bronze to junit (1 junit = 80 silver = 960 bronze)
+	const totalJunit = total / (80 * 12);
+	document.getElementById('total_cost_display').textContent = totalJunit.toFixed(2);
+	document.getElementById('total_cost').value = totalJunit.toFixed(2);
+}
+
+// Initialize cost calculation
+document.addEventListener('DOMContentLoaded', function() {
+	document.querySelectorAll('.ingredient-selector').forEach(select => {
+		select.addEventListener('change', updateCost);
+	});
+});
+</script>
+
+<hr style="margin: 30px 0;">
+
+<!-- EXISTING RECIPES TABLE -->
+<h4>📚 Существующие рецепты</h4>
+<table class="recipe-table table table-bordered">
+	<thead>
+		<tr>
+			<th>ID</th>
+			<th>Изображение</th>
+			<th>Название</th>
+			<th>Номер</th>
+			<th>Стоимость</th>
+			<th>Ингредиентов</th>
+			<th>Статус</th>
+			<th>Турнир</th>
+			<th>Действия</th>
+		</tr>
+	</thead>
+	<tbody>
+		<?php
+		$recipes_query = "SELECT r.*, COUNT(ri.id) as ing_count
+						  FROM recipes r
+						  LEFT JOIN recipe_ingredients ri ON r.id = ri.recipe_id
+						  GROUP BY r.id
+						  ORDER BY CAST(r.potion_number AS UNSIGNED), r.potion_number";
+		$recipes_result = mysqli_query($conn, $recipes_query);
+
+		while($recipe = mysqli_fetch_assoc($recipes_result)) {
+			echo "<tr>";
+			echo "<td>" . $recipe['id'] . "</td>";
+			echo "<td><img src='" . htmlspecialchars($recipe['image_url']) . "' alt='potion' /></td>";
+			echo "<td><b>" . htmlspecialchars($recipe['name']) . "</b></td>";
+			echo "<td>" . htmlspecialchars($recipe['potion_number']) . "</td>";
+			echo "<td>₽" . number_format($recipe['cost'], 2) . "</td>";
+			echo "<td>" . $recipe['ing_count'] . "</td>";
+			echo "<td>" . ($recipe['is_active'] ? "<span style='color:green'>✓ Активен</span>" : "<span style='color:red'>✗ Скрыт</span>") . "</td>";
+			echo "<td>" . ($recipe['requires_tournament'] ? "<span style='color:orange'>Да</span>" : "Нет") . "</td>";
+			echo "<td>";
+
+			// Toggle visibility button
+			if($recipe['is_active']) {
+				echo "<a href='?toggle_active=" . $recipe['id'] . "' class='btn btn-warning btn-sm action-btn' onclick='return confirm(\"Скрыть этот рецепт?\")'>Скрыть</a> ";
+			} else {
+				echo "<a href='?toggle_active=" . $recipe['id'] . "' class='btn btn-success btn-sm action-btn' onclick='return confirm(\"Показать этот рецепт?\")'>Показать</a> ";
+			}
+
+			// Delete button
+			echo "<a href='?delete_recipe=" . $recipe['id'] . "' class='btn btn-danger btn-sm action-btn' onclick='return confirm(\"Удалить рецепт навсегда?\")'>Удалить</a>";
+
+			echo "</td>";
+			echo "</tr>";
+		}
+		?>
+	</tbody>
+</table>     
                                 
                             </div>
                         </div>
