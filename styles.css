@@ -1,0 +1,112 @@
+@font-face {
+font-family: Original;
+src: url('https://magismo.ru/castle_style/fonts/Original.otf');
+}
+
+@font-face {
+font-family: Magismo;
+src: url('https://magismo.ru/castle_style/fonts/Magismos.ttf');
+}
+
+.customfont { font-family: Original;}
+.magismo { font-family: Magismo; font-size:14px;}
+
+html { 
+  background: url('https://magismo.ru/potions/images/bg.jpg') no-repeat center center fixed; 
+  -webkit-background-size: cover;
+  -moz-background-size: cover;
+  -o-background-size: cover;
+  background-size: cover;
+  font-family:Magismo;
+}
+
+body {
+  -webkit-animation-duration: 10s;
+  animation-duration: 10s;
+  -webkit-animation-fill-mode: both;
+  animation-fill-mode: both;
+}
+
+.cauldron {
+    height:30%;
+    background-image: url('https://magismo.ru/potions/images/cauldron.png');
+    background-repeat:no-repeat;
+    background-size: contain;
+    background-position:center center;
+    position: fixed;
+    top:480px;
+    bottom: 0;
+    left: 120px;
+    right: 0;
+    animation: float 6s ease-in-out infinite;
+    margin: auto;
+    display: inline-block;
+    visibility: visible;
+    
+}
+
+
+@keyframes float {
+	0% {
+		box-shadow: 0 0px 0px 0px rgba(0,0,0,0.6);
+		transform: translatey(0px);
+	}
+	50% {
+		box-shadow: 0 0px 0px 0px rgba(0,0,0,0.2);
+		transform: translatey(-20px);
+	}
+	100% {
+		box-shadow: 0 0px 0px 0px rgba(0,0,0,0.6);
+		transform: translatey(0px);
+	}
+}
+.noauth {
+    padding:1px;
+    width:610px;
+    height:auto;
+    position:relative;
+    border-radius:10px;
+    overflow:hidden;
+    color: white;
+    text-align:center;
+    background-image: linear-gradient(rgba(204, 204, 204,0.5), rgba(204, 204, 204,0.5));
+}
+
+.content {
+    padding:1px;
+    width:610px;
+    height:auto;
+    position:relative;
+    background-image: linear-gradient(rgba(204, 204, 204,0.5), rgba(204, 204, 204,0.5));
+    overflow:hidden;
+    color: white;
+}
+
+input[type=text], input[type=password] {
+  width: 28%;
+  padding: 12px 20px;
+  margin: 8px 0;
+  background-color:inherit;
+  box-sizing: border-box;
+  border: none;
+  border-bottom: 2px solid #5c462c;
+}
+
+input[type=button], input[type=submit], input[type=reset] {
+  background-color: #5c462c;
+  border: none;
+  color: white;
+  padding: 16px 32px;
+  text-decoration: none;
+  margin: 4px 2px;
+  cursor: pointer;
+}
+
+select {
+  width: auto;
+  padding: 16px 20px;
+  border: none;
+  border-radius: 4px;
+  background-color: #f1f1f1;
+}
+
